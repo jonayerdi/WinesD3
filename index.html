@@ -64,6 +64,7 @@
 		<script type="text/javascript" src="js/d3.js"></script>
 		<script type="text/javascript" src="js/d3.csv.js"></script>
 		<script type="text/javascript">
+			var svg;
 			var currentFile = "wine_red.csv";
 			var types = ["red", "white"],
 				traits = ["fixed acidity","volatile acidity","citric acid","residual sugar","chlorides","free sulfur dioxide","total sulfur dioxide","density","pH","sulphates","alcohol","quality"];
@@ -81,7 +82,7 @@
 
 			function createGraph(file) {
 				d3.select("svg").remove();
-				var svg = d3.select("body").append("svg:svg")
+				svg = d3.select("body").append("svg:svg")
 				.attr("width", w + m[1] + m[3])
 				.attr("height", h + m[0] + m[2])
 			  .append("svg:g")
@@ -152,6 +153,7 @@
 				  var g = svg.selectAll(".trait")
 					  .data(traits)
 					.enter().append("svg:g")
+					  .attr("id", function(d) { return d;})
 					  .attr("class", "trait")
 					  .attr("transform", function(d) { return "translate(" + x(d) + ")"; })
 					  .call(d3.behavior.drag()
@@ -162,6 +164,7 @@
 
 				  // Add an axis and title.
 				  g.append("svg:g")
+					  .attr("id", function(d) { return d;})
 					  .attr("class", "axis")
 					  .each(function(d) { d3.select(this).call(axis.scale(y[d])); })
 					.append("svg:text")
@@ -171,6 +174,7 @@
 
 				  // Add a brush for each axis.
 				  g.append("svg:g")
+					  .attr("id", function(d) { return d;})
 					  .attr("class", "brush")
 					  .each(function(d) { d3.select(this).call(y[d].brush); })
 					.selectAll("rect")
@@ -196,6 +200,24 @@
 				  }
 				});
 			}
+			
+			function initTraitCheckboxes() {
+				var p = d3.select("body").append("p");
+				traits.forEach(function(element) {
+					p
+					.append("input")
+					.attr("id",element)
+					.attr("type","checkbox")
+					.attr("checked",true)
+					.attr("onchange","traitChanged(this.id,this.checked);");
+					p
+					.append("label")
+					.attr("for",element)
+					.html(element);
+				});
+			}
+			
+			initTraitCheckboxes();
 			
 			createGraph(currentFile);
 
@@ -249,6 +271,77 @@
 						break;
 				}
 				createGraph(currentFile);
+			}
+			
+			function updateTraits() {
+				d3.selectAll(".trait").data(traits).remove();
+				// Add a group element for each trait.
+				var g = svg.selectAll(".trait")
+				  .data(traits)
+				.enter().append("svg:g")
+				  .attr("id", function(d) { return d;})
+				  .attr("class", "trait")
+				  .attr("transform", function(d) { return "translate(" + x(d) + ")"; })
+				  .call(d3.behavior.drag()
+				  .origin(function(d) { return {x: x(d)}; })
+				  .on("dragstart", dragstart)
+				  .on("drag", drag)
+				  .on("dragend", dragend));
+
+				// Add an axis and title.
+				g.append("svg:g")
+				  .attr("id", function(d) { return d;})
+				  .attr("class", "axis")
+				  .each(function(d) { d3.select(this).call(axis.scale(y[d])); })
+				.append("svg:text")
+				  .attr("text-anchor", "middle")
+				  .attr("y", -9)
+				  .text(String);
+
+				// Add a brush for each axis.
+				g.append("svg:g")
+				  .attr("id", function(d) { return d;})
+				  .attr("class", "brush")
+				  .each(function(d) { d3.select(this).call(y[d].brush); })
+				.selectAll("rect")
+				  .attr("x", -8)
+				  .attr("width", 16);
+
+				function dragstart(d) {
+				i = traits.indexOf(d);
+				}
+
+				function drag(d) {
+				x.range()[i] = d3.event.x;
+				traits.sort(function(a, b) { return x(a) - x(b); });
+				g.attr("transform", function(d) { return "translate(" + x(d) + ")"; });
+				foreground.attr("d", path);
+				}
+
+				function dragend(d) {
+				x.domain(traits).rangePoints([0, w]);
+				var t = d3.transition().duration(500);
+				t.selectAll(".trait").attr("transform", function(d) { return "translate(" + x(d) + ")"; });
+				t.selectAll(".foreground path").attr("d", path);
+				}
+				
+				x.domain(traits).rangePoints([0, w]);
+				var t = d3.transition().duration(500);
+				t.selectAll(".trait").attr("transform", function(d) { return "translate(" + x(d) + ")"; });
+				t.selectAll(".foreground path").attr("d", path);
+			}
+			
+			function traitChanged(id, value) {
+				index = traits.indexOf(id);
+				if(value && index==-1)
+					traits.push(id);
+					
+				else if(!value && index>-1) {
+					traits.splice(index,1);
+				}
+				//Hack to fix strange d3 bug (2 axes for the last trait, first trait missing)
+				updateTraits();
+				updateTraits();
 			}
 		</script>
 	</body>
