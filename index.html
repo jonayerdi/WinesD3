@@ -16,11 +16,13 @@
 			.foreground path.fade.red {
 			  stroke: #4daf4a;
 			  stroke-opacity: .02;
+			  z-index="-1"
 			}
 			
 			.foreground path.fade.white {
 			  stroke: #ffff33;
 			  stroke-opacity: .02;
+			  z-index="-1"
 			}
 
 			.legend {
@@ -69,9 +71,9 @@
 			var types = ["red", "white"],
 				traits = ["fixed acidity","volatile acidity","citric acid","residual sugar","chlorides","free sulfur dioxide","total sulfur dioxide","density","pH","sulphates","alcohol","quality"];
 
-			var m = [80, 40, 200, 40],
+			var m = [20, 40, 200, 40],
 				w = 1300 - m[1] - m[3],
-				h = 800 - m[0] - m[2];
+				h = 710 - m[0] - m[2];
 
 			var x = d3.scale.ordinal().domain(traits).rangePoints([0, w]),
 				y = {};
@@ -109,7 +111,7 @@
 					  .data(types)
 					.enter().append("svg:g")
 					  .attr("class", "legend")
-					  .attr("transform", function(d, i) { return "translate(0," + (i * 20 + 584) + ")"; });
+					  .attr("transform", function(d, i) { return "translate(0," + (i * 20 + 514) + ")"; });
 
 				  legend.append("svg:rect")
 					.attr("onclick","typeCheckbox(d3.select(this));")
@@ -308,21 +310,21 @@
 				  .attr("width", 16);
 
 				function dragstart(d) {
-				i = traits.indexOf(d);
+					i = traits.indexOf(d);
 				}
 
 				function drag(d) {
-				x.range()[i] = d3.event.x;
-				traits.sort(function(a, b) { return x(a) - x(b); });
-				g.attr("transform", function(d) { return "translate(" + x(d) + ")"; });
-				foreground.attr("d", path);
+					x.range()[i] = d3.event.x;
+					traits.sort(function(a, b) { return x(a) - x(b); });
+					g.attr("transform", function(d) { return "translate(" + x(d) + ")"; });
+					foreground.attr("d", path);
 				}
 
 				function dragend(d) {
-				x.domain(traits).rangePoints([0, w]);
-				var t = d3.transition().duration(500);
-				t.selectAll(".trait").attr("transform", function(d) { return "translate(" + x(d) + ")"; });
-				t.selectAll(".foreground path").attr("d", path);
+					x.domain(traits).rangePoints([0, w]);
+					var t = d3.transition().duration(500);
+					t.selectAll(".trait").attr("transform", function(d) { return "translate(" + x(d) + ")"; });
+					t.selectAll(".foreground path").attr("d", path);
 				}
 				
 				x.domain(traits).rangePoints([0, w]);
